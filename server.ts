@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import Stripe from "stripe";
 import fs from "fs";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs, doc, setDoc, query, orderBy, Timestamp } from "firebase/firestore";
+import { getFirestore, collection, getDocs, doc, setDoc, query, orderBy, Timestamp, serverTimestamp } from "firebase/firestore";
 
 // Load environment variables
 dotenv.config();
@@ -67,7 +67,7 @@ async function startServer() {
             date,
             time,
             foodItem: foodItem || "None (Reserve table only)",
-            createdAt: Timestamp.now()
+            createdAt: serverTimestamp()
           });
           console.log("[Firebase] Booking saved successfully with ID:", bookingId);
         } catch (fbError) {

@@ -1956,21 +1956,6 @@ export default function App() {
                             <span className="text-emerald-400 font-bold text-right leading-tight max-w-[200px]">{bookingDetails.foodItem}</span>
                           </div>
                         )}
-
-                        <div className="flex justify-between items-center pt-2 mt-0.5 border-t border-white/5 border-dashed">
-                          <span className="text-gray-500 text-[9px] flex items-center gap-1 animate-pulse">
-                            <Clock className="w-3 h-3 text-[#FF4500]" />
-                            TABLE HOLD TIME:
-                          </span>
-                          <div className="text-right">
-                            <span className={secondsLeft === 0 ? "text-red-500 font-extrabold text-[11px] font-mono animate-pulse" : "text-[#FF4500] font-black tracking-wider text-[11px] font-mono"}>
-                              {secondsLeft === 0 ? "EXPIRED" : formatCountdown(secondsLeft)}
-                            </span>
-                            <p className="text-[7.5px] text-gray-500 font-sans leading-none mt-0.5 uppercase tracking-tight">
-                              {secondsLeft === 0 ? "Table Auto-Released" : "Released at 00:00"}
-                            </p>
-                          </div>
-                        </div>
                       </div>
 
                       {/* Perforation segment footer */}
