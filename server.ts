@@ -2,8 +2,10 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
-import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
+import fs from "fs";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, getDocs, doc, setDoc, query, orderBy, Timestamp } from "firebase/firestore";
 
 // Load environment variables
 dotenv.config();
@@ -50,6 +52,27 @@ async function startServer() {
 
       if (!time || typeof time !== "string" || !time.includes(":")) {
         return res.status(400).json({ success: false, error: "Please select a valid time." });
+      }
+
+      // Save booking to Firebase Firestore in compliance with schemas and permissions
+      const db = getFirestoreDb();
+      if (db) {
+        console.log("[Firebase] Attempting to save booking to Firestore...");
+        try {
+          const bookingId = "booking-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
+          await setDoc(doc(db, "bookings", bookingId), {
+            name: name.trim(),
+            phone: phone.trim(),
+            guests: guestsNum,
+            date,
+            time,
+            foodItem: foodItem || "None (Reserve table only)",
+            createdAt: Timestamp.now()
+          });
+          console.log("[Firebase] Booking saved successfully with ID:", bookingId);
+        } catch (fbError) {
+          console.error("[Firebase Error] Booking save failed:", fbError);
+        }
       }
 
       // SMS Templates
@@ -209,32 +232,26 @@ To Store Admin (${twilioAdminTo || "+91 99999 56832 (Default)"}):
   ];
 
   // Lazy compilers for custom environment clients
-  let supabaseInstance: any = null;
-  const getSupabase = () => {
-    if (!supabaseInstance) {
-      const url = process.env.SUPABASE_URL?.trim();
-      const anon = process.env.SUPABASE_ANON_KEY?.trim();
-      const isUrlValid = (str: string) => {
-        try {
-          const u = new URL(str);
-          return u.protocol === "http:" || u.protocol === "https:";
-        } catch (_) {
-          return false;
-        }
-      };
+  let firebaseApp: any = null;
+  let firestoreDb: any = null;
 
-      if (url && anon && isUrlValid(url)) {
-        try {
-          supabaseInstance = createClient(url, anon);
-          console.log("[Supabase Status] Connected to client.");
-        } catch (err) {
-          console.log("[Supabase Status] Offline check bypassed.");
+  const getFirestoreDb = () => {
+    if (!firestoreDb) {
+      try {
+        const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+        if (fs.existsSync(configPath)) {
+          const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+          firebaseApp = initializeApp(config);
+          firestoreDb = getFirestore(firebaseApp, config.firestoreDatabaseId);
+          console.log("[Firebase Status] Connected to Firestore database.");
+        } else {
+          console.log("[Firebase Status] Config file firebase-applet-config.json not found.");
         }
-      } else if (url && anon) {
-        console.log("[Supabase Status] Checked local fallback schema.");
+      } catch (err) {
+        console.error("[Firebase Status] Failed to initialize Firebase:", err);
       }
     }
-    return supabaseInstance;
+    return firestoreDb;
   };
 
   let stripeInstance: any = null;
@@ -256,18 +273,20 @@ To Store Admin (${twilioAdminTo || "+91 99999 56832 (Default)"}):
   // Testimonials Fetch API Endpoint
   app.get("/api/testimonials", async (req, res) => {
     try {
-      const supabase = getSupabase();
-      if (supabase) {
-        console.log("[Supabase] Fetching testimonials table...");
-        const { data, error } = await supabase
-          .from("testimonials")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (!error && data) {
-          return res.json({ success: true, count: data.length, data, source: "supabase" });
+      const db = getFirestoreDb();
+      if (db) {
+        console.log("[Firebase] Fetching testimonials from Firestore...");
+        try {
+          const testimonialsCol = collection(db, "testimonials");
+          const q = query(testimonialsCol, orderBy("created_at", "desc"));
+          const snapshot = await getDocs(q);
+          const fbData = snapshot.docs.map(doc => doc.data());
+          if (fbData.length > 0) {
+            return res.json({ success: true, count: fbData.length, data: fbData, source: "firestore" });
+          }
+        } catch (fbError) {
+          console.warn("[Firebase Warn] Failed to query collection 'testimonials', falling back to local list. Error:", fbError);
         }
-        console.warn("[Supabase Warn] Failed to query table testimonials, falling back to local list. Error:", error);
       }
       
       // Fallback is local in memory
@@ -288,27 +307,25 @@ To Store Admin (${twilioAdminTo || "+91 99999 56832 (Default)"}):
       }
 
       const parsedRating = parseInt(rating, 10) || 5;
+      const testimonialId = "review-" + Date.now();
 
       const newReview = {
-        id: "review-" + Date.now(),
+        id: testimonialId,
         name: name.trim(),
         text: text.trim(),
         rating: Math.max(1, Math.min(5, parsedRating)),
         created_at: new Date().toISOString()
       };
 
-      const supabase = getSupabase();
-      if (supabase) {
-        console.log("[Supabase] Attempting to insert review to remote table: testimonials");
-        const { data, error } = await supabase
-          .from("testimonials")
-          .insert([newReview])
-          .select();
-
-        if (!error) {
+      const db = getFirestoreDb();
+      if (db) {
+        console.log("[Firebase] Attempting to insert review to Firestore collection: testimonials");
+        try {
+          await setDoc(doc(db, "testimonials", testimonialId), newReview);
           return res.status(201).json({ success: true, data: newReview, synced: true });
+        } catch (fbError) {
+          console.warn("[Firebase Error] testimonial insert failed, fallback to local memory database saving:", fbError);
         }
-        console.warn("[Supabase Error] insert failed, fallback to local database saving:", error);
       }
 
       // Add to local list state

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Star, MessageSquare, Quote, AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, User } from "lucide-react";
+import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
+import { db, handleFirestoreError, OperationType } from "../firebase";
 
 interface Testimonial {
   id: string;
@@ -43,7 +45,35 @@ export default function TestimonialsSection() {
   };
 
   useEffect(() => {
-    fetchTestimonials();
+    let unsubscribe: () => void;
+    try {
+      const q = query(collection(db, "testimonials"), orderBy("created_at", "desc"), limit(20));
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const list: Testimonial[] = [];
+        snapshot.forEach((doc) => {
+          list.push(doc.data() as Testimonial);
+        });
+        if (list.length > 0) {
+          setReviews(list);
+          setLoading(false);
+        } else {
+          fetchTestimonials();
+        }
+      }, (error) => {
+        console.warn("[Firebase Client Testimonials onSnapshot error]:", error);
+        try {
+          handleFirestoreError(error, OperationType.GET, "testimonials");
+        } catch (_) {}
+        fetchTestimonials();
+      });
+    } catch (err) {
+      console.warn("[Firebase listener initialization error]:", err);
+      fetchTestimonials();
+    }
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   // Set carousel cycle loop

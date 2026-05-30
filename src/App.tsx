@@ -20,7 +20,13 @@ import {
   ShieldCheck,
   Smartphone,
   Sun,
-  Moon
+  Moon,
+  Ticket,
+  Printer,
+  Download,
+  Sparkles,
+  QrCode,
+  Share2
 } from "lucide-react";
 import { MENU_ITEMS } from "./menuData";
 import { MenuItem } from "./types";
@@ -72,6 +78,11 @@ export default function App() {
   const [smsSimulated, setSmsSimulated] = useState(false);
   const [smsLogs, setSmsLogs] = useState<any>(null);
   const [selectedChannel, setSelectedChannel] = useState<"whatsapp" | "sms" | null>(null);
+  const [successTab, setSuccessTab] = useState<"pass" | "receipt">("pass");
+  const [walletAdded, setWalletAdded] = useState(false);
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [downloadingPass, setDownloadingPass] = useState(false);
+  const [downloadFinished, setDownloadFinished] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(900); // 15 mins hold duration
 
   // Validation Error States for Shake & Red Glow
@@ -117,6 +128,63 @@ export default function App() {
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const handlePrintPass = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    
+    const passId = "SGF-PASS-" + (bookingDetails?.phone?.slice(-4) || "8812");
+    const vipTag = bookingDetails?.wantsVIP || paymentSuccess ? "★ FIRST CLASS VIP" : "ELITE CLASS DINER";
+    const dishInfo = bookingDetails?.foodItem && bookingDetails.foodItem !== "None (Reserve table only)" 
+      ? "<div style='margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;'>" +
+        "<strong>PRE-ORDERED DISH COUPON:</strong><br>" +
+        "<span style='font-size: 15px; color: #ff3c00; font-weight: bold;'>" + bookingDetails.foodItem + "</span>" +
+        "</div>"
+      : "";
+
+    const htmlLines = [
+      "<html>",
+      "  <head>",
+      "    <title>SGF Narela Dining Pass - " + (bookingDetails?.name || "") + "</title>",
+      "    <style>",
+      "      @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap');",
+      "      body { font-family: 'Space Grotesk', 'Courier New', sans-serif; background: #fff; color: #111; padding: 40px 20px; display: flex; justify-content: center; align-items: center; }",
+      "      .pass-card { border: 3px solid #ff4500; padding: 30px; width: 380px; border-radius: 16px; position: relative; background: #fafafa; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }",
+      "      .header-info { border-bottom: 2px dashed #000; padding-bottom: 15px; margin-bottom: 20px; text-align: center; }",
+      "      .brand { font-weight: 900; font-size: 20px; letter-spacing: -0.5px; color: #ff4500; margin: 0; }",
+      "      .subtitle { font-size: 9px; letter-spacing: 2px; color: #666; margin-top: 4px; text-transform: uppercase; }",
+      "      .pass-tag { display: inline-block; margin-top: 10px; background: #111; color: #fff; font-size: 10px; font-weight: bold; padding: 4px 12px; border-radius: 50px; letter-spacing: 1px; }",
+      "      .row { display: flex; justify-content: space-between; margin: 12px 0; font-size: 13px; font-family: 'JetBrains Mono', monospace; }",
+      "      .label { color: #666; font-size: 11px; }",
+      "      .value { font-weight: bold; color: #111; }",
+      "      .barcode { margin: 25px 0 10px 0; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 4px; border-top: 1px dashed #ccc; padding-top: 20px; }",
+      "      .watermark { text-align: center; font-size: 9px; color: #888; margin-top: 15px; font-style: italic; }",
+      "    </style>",
+      "  </head>",
+      "  <body onload='window.print()'>",
+      "    <div class='pass-card'>",
+      "      <div class='header-info'>",
+      "        <div class='brand'>SGF NARELA</div>",
+      "        <div class='subtitle'>Express Dining Boarding Pass</div>",
+      "        <div class='pass-tag'>" + vipTag + "</div>",
+      "      </div>",
+      "      <div class='row'><span class='label'>PASS-ID:</span><span class='value'>" + passId + "</span></div>",
+      "      <div class='row'><span class='label'>PASS HOLDER:</span><span class='value'>" + (bookingDetails?.name || "").toUpperCase() + "</span></div>",
+      "      <div class='row'><span class='label'>CONTACT NO:</span><span class='value'>+91 " + (bookingDetails?.phone || "") + "</span></div>",
+      "      <div class='row'><span class='label'>DINERS NO:</span><span class='value'>" + (bookingDetails?.guests || "") + " Guests</span></div>",
+      "      <div class='row'><span class='label'>ARRIVING DATE:</span><span class='value'>" + (bookingDetails?.date || "") + "</span></div>",
+      "      <div class='row'><span class='label'>TIME SLOT:</span><span class='value' style='font-size: 15px; color: #ff4500;'>" + (bookingDetails?.time || "") + "</span></div>",
+      dishInfo,
+      "      <div class='barcode'>||||| | ||||| | |||| | ||| ||||<br>" + passId + "</div>",
+      "      <div class='watermark'>Please present upon entry at front desk.<br>SGF Narela • Ready to delicious.</div>",
+      "    </div>",
+      "  </body>",
+      "</html>"
+    ];
+
+    printWindow.document.write(htmlLines.join("\n"));
+    printWindow.document.close();
   };
 
   // Set today's date for date minimum validation attribute
@@ -1590,13 +1658,263 @@ export default function App() {
                     </p>
                   </div>
 
-                  {/* Luxury Receipt Ticket Wrapper */}
+                  {/* Interactive Tab Switcher for Booking Details */}
                   {bookingDetails && (
+                    <div className="flex bg-[#1E1E22] border border-white/5 rounded-xl p-0.5 relative z-10 font-sans">
+                      <button
+                        onClick={() => setSuccessTab("pass")}
+                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all focus:outline-none ${
+                          successTab === "pass"
+                            ? "bg-gradient-to-r from-[#FF4500] to-orange-500 text-white shadow-lg"
+                            : "text-gray-400 hover:text-white"
+                        }`}
+                      >
+                        <Ticket className="w-3.5 h-3.5" />
+                        Dining Pass
+                      </button>
+                      <button
+                        onClick={() => setSuccessTab("receipt")}
+                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all focus:outline-none ${
+                          successTab === "receipt"
+                            ? "bg-black/50 text-white border border-white/5"
+                            : "text-gray-400 hover:text-white"
+                        }`}
+                      >
+                        <CreditCard className="w-3.5 h-3.5" />
+                        Receipt Details
+                      </button>
+                    </div>
+                  )}
+
+                  {/* TAB A: DIGITAL BOARDING PASS CARD */}
+                  {successTab === "pass" && bookingDetails && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.96 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3 }}
+                      className="relative p-5 sm:p-6 rounded-3xl bg-gradient-to-tr from-[#161619] via-[#101012] to-[#0A0A0C] border-2 border-[#FF4500]/25 shadow-[0_15px_40px_rgba(255,69,0,0.12)] space-y-4 text-left overflow-hidden"
+                    >
+                      {/* Decorative Gloss Reflection Glow */}
+                      <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+
+                      {/* Header with brand logo & Pass stamp */}
+                      <div className="flex justify-between items-start border-b border-white/5 pb-3 relative z-10">
+                        <div className="space-y-0.5">
+                          <p className="text-[9px] font-black tracking-widest text-[#FF4500] uppercase font-mono leading-none flex items-center gap-1">
+                            <Sparkles className="w-2.5 h-2.5 animate-pulse text-[#FF4500]" />
+                            EXPRESS DINING PASS
+                          </p>
+                          <h4 className="font-display font-black text-white text-base tracking-tight leading-none uppercase">
+                            SGF Narela
+                          </h4>
+                          <p className="text-[7px] text-gray-400 font-mono tracking-wider">
+                            SPICED GOURMET FARE GROUP
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end">
+                          <span className={`text-[8.5px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider border font-mono ${
+                            bookingDetails?.wantsVIP || paymentSuccess
+                              ? "bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.15)]"
+                              : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          }`}>
+                            {bookingDetails?.wantsVIP || paymentSuccess ? "★ VIP PREMIUM" : "STANDARD ELITE"}
+                          </span>
+                          <span className="text-[7px] text-gray-500 font-mono mt-1">
+                            CODE: SGF-{Math.abs(bookingDetails.name?.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)) || "7829"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Passenger Details Boarding Grid */}
+                      <div className="grid grid-cols-2 gap-y-3.5 gap-x-4 border-b border-white/5 pb-4 font-mono relative z-10">
+                        <div>
+                          <p className="text-[8px] text-gray-500 uppercase tracking-widest leading-none">DINER NAME</p>
+                          <p className="text-[11.5px] font-bold text-white uppercase mt-1 tracking-wide leading-tight truncate">
+                            {bookingDetails.name}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[8px] text-gray-500 uppercase tracking-widest leading-none">SEATING ACCESS</p>
+                          <p className="text-[11.5px] font-bold text-amber-400 mt-1 uppercase leading-tight">
+                            {bookingDetails?.wantsVIP || paymentSuccess ? "VVIP Sofa Lounge" : `${bookingDetails.guests} Guests (Table)`}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[8px] text-gray-500 uppercase tracking-widest leading-none">RESERVATION DATE</p>
+                          <p className="text-[11px] font-bold text-white mt-1">
+                            {bookingDetails.date}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[8px] text-gray-500 uppercase tracking-widest leading-none">ARRIVING TIME</p>
+                          <p className="text-[12.5px] font-black text-[#FF4500] mt-0.5">
+                            {bookingDetails.time}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Special food preordered or standard access banner */}
+                      {bookingDetails.foodItem && bookingDetails.foodItem !== "None (Reserve table only)" ? (
+                        <div className="p-2.5 rounded-xl bg-orange-500/10 border border-orange-500/15 flex items-center justify-between text-[10px] relative z-10 font-mono">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                            <div>
+                              <p className="font-bold text-white text-[9px] leading-none">PRE-ORDERED DINING VOUCHER</p>
+                              <p className="text-gray-400 text-[8.5px] mt-0.5 leading-tight">{bookingDetails.foodItem}</p>
+                            </div>
+                          </div>
+                          <span className="text-[8.5px] text-amber-400 uppercase font-black tracking-widest bg-amber-500/5 px-1.5 py-0.5 rounded border border-amber-500/15 shrink-0">
+                            VALID AT TABLE
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="p-2.5 rounded-xl bg-[#222]/40 border border-white/5 flex items-center gap-2 text-[9px] text-gray-400 relative z-10 leading-normal">
+                          <CheckCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <p>Present pass at the SGF front desk for fast-track seating access and priority queue selection.</p>
+                        </div>
+                      )}
+
+                      {/* Barcode and Verification Indicator */}
+                      <div className="flex items-center justify-between pt-1 relative z-10">
+                        <div className="space-y-0.5 max-w-[62%] font-sans">
+                          <div className="flex items-center gap-1 text-[9px] text-emerald-400 font-bold uppercase tracking-wider font-mono">
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Verified Reservation</span>
+                          </div>
+                          <p className="text-[8px] text-gray-400 leading-normal">
+                            Issued instantly on {new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}. Validity starts 15 mins prior to time slot.
+                          </p>
+                          <p className="text-[7px] text-gray-500 uppercase font-mono mt-1">
+                            Sign: Executive Host, SGF
+                          </p>
+                        </div>
+                        
+                        {/* Custom SVG-rendered QR code graphic */}
+                        <div className="w-[68px] h-[68px] bg-white rounded-xl p-1.5 flex items-center justify-center relative shadow-lg shrink-0 overflow-hidden select-none">
+                          <div className="grid grid-cols-5 gap-[1.5px] w-full h-full opacity-90">
+                            {/* QR corners layout */}
+                            <div className="bg-black rounded-sm" /><div className="bg-black rounded-sm" /><div className="bg-gray-400 rounded-sm" /><div className="bg-black rounded-sm" /><div className="bg-black rounded-sm" />
+                            <div className="bg-black rounded-sm" /><div className="bg-white rounded-sm" /><div className="bg-black rounded-sm" /><div className="bg-white rounded-sm" /><div className="bg-black rounded-sm" />
+                            <div className="bg-gray-400 rounded-sm" /><div className="bg-black rounded-sm" /><div className="bg-gray-300 rounded-sm" /><div className="bg-black rounded-sm" /><div className="bg-gray-400 rounded-sm" />
+                            <div className="bg-black rounded-sm" /><div className="bg-white rounded-sm" /><div className="bg-black rounded-sm" /><div className="bg-white rounded-sm" /><div className="bg-black rounded-sm" />
+                            <div className="bg-black rounded-sm" /><div className="bg-black rounded-sm" /><div className="bg-gray-400 rounded-sm" /><div className="bg-black rounded-sm" /><div className="bg-black rounded-sm" />
+                          </div>
+                          {/* SGF signature label */}
+                          <div className="absolute inset-0 m-auto w-5 h-5 bg-[#FF4500] text-white flex items-center justify-center text-[5.5px] font-black rounded-md border border-white shadow">
+                            SGF
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Inner Utility Buttons associated with downloading the pass */}
+                      <div className="pt-2.5 border-t border-white/5 space-y-2 relative z-10">
+                        <div className="grid grid-cols-2 gap-2 text-[9px] font-black uppercase tracking-wider font-mono">
+                          {/* Print card option */}
+                          <button
+                            onClick={handlePrintPass}
+                            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-white/10 hover:border-white/30 hover:bg-white/5 text-gray-300 hover:text-white transition-all cursor-pointer focus:outline-none"
+                          >
+                            <Printer className="w-3.5 h-3.5 text-[#FF4500]" />
+                            Print Pass
+                          </button>
+
+                          {/* Download pass logic */}
+                          <button
+                            onClick={() => {
+                              if (downloadingPass) return;
+                              setDownloadingPass(true);
+                              setTimeout(() => {
+                                setDownloadingPass(false);
+                                setDownloadFinished(true);
+                                
+                                const element = document.createElement("a");
+                                const file = new Blob([
+                                  `===================================\n`,
+                                  `     SGF NARELA DINNING TICKET      \n`,
+                                  `===================================\n`,
+                                  `PASS NO   : SGF-PASS-${bookingDetails.phone?.slice(-4) || "8812"}\n`,
+                                  `DINER     : ${bookingDetails.name.toUpperCase()}\n`,
+                                  `CONTACT   : +91 ${bookingDetails.phone}\n`,
+                                  `SEATING   : ${bookingDetails.guests} Guests\n`,
+                                  `DATE      : ${bookingDetails.date}\n`,
+                                  `TIME SLOT : ${bookingDetails.time}\n`,
+                                  `DISP TIME : ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}\n`,
+                                  `SEAT PLAN : ${bookingDetails?.wantsVIP || paymentSuccess ? "VVIP PREMIUM SOFA SUITE (₹500 PAID)" : "STANDARD COZY SEAT"}\n`,
+                                  `PRE-ORDER : ${bookingDetails.foodItem || "None"}\n`,
+                                  `===================================\n`,
+                                  `PRESENT THIS FILE UPON ARRIVAL AT RETREAT\n`,
+                                  `FAST-TRACK ENTRY CODE DIRECTLY EMBEDDED\n`,
+                                ] , {type: 'text/plain'});
+                                element.href = URL.createObjectURL(file);
+                                element.download = `SGF-DiningPass-${bookingDetails.name.replace(/\s+/g, "_")}.txt`;
+                                document.body.appendChild(element);
+                                element.click();
+                                document.body.removeChild(element);
+                              }, 1100);
+                            }}
+                            className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white transition-all cursor-pointer focus:outline-none relative"
+                          >
+                            {downloadingPass ? (
+                              <span className="w-3 h-3 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                            ) : downloadFinished ? (
+                              <>
+                                <span className="bg-emerald-500 text-black text-[7px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold font-sans">✓</span>
+                                Auto-Saved
+                              </>
+                            ) : (
+                              <>
+                                <Download className="w-3.5 h-3.5 text-amber-400" />
+                                Save Pass File
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Simulated Google or Apple Wallet Integration */}
+                        <button
+                          onClick={() => {
+                            if (walletAdded || walletLoading) return;
+                            setWalletLoading(true);
+                            setTimeout(() => {
+                              setWalletLoading(false);
+                              setWalletAdded(true);
+                            }, 1200);
+                          }}
+                          className={`w-full py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest font-mono flex items-center justify-center gap-1.5 transition-all cursor-pointer focus:outline-none ${
+                            walletAdded 
+                              ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400" 
+                              : "bg-[#111112] text-gray-400 hover:text-white border border-white/5 hover:border-[#FF4500]/30"
+                          }`}
+                        >
+                          {walletLoading ? (
+                            <>
+                              <span className="w-3 h-3 border-2 border-[#FF4500] border-t-transparent rounded-full animate-spin" />
+                              Syncing with Wallet Engine...
+                            </>
+                          ) : walletAdded ? (
+                            <>
+                              <span className="bg-emerald-500 text-black text-[7px] px-1 rounded-sm">✓</span>
+                              ADDED TO APPLE & GOOGLE PASSBOOK
+                            </>
+                          ) : (
+                            <>
+                              <Smartphone className="w-3.5 h-3.5 text-amber-500" />
+                              ADD TO PHONE WALLET PASSES
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* TAB B: ORIGINAL LUXURY RECEIPT DETAILS VIEW */}
+                  {successTab === "receipt" && bookingDetails && (
                     <motion.div 
+                      key="receipt-tab"
                       initial={{ opacity: 0, y: 15 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.1, duration: 0.3 }}
-                      className="relative p-4 sm:p-5 rounded-2xl bg-black/60 border border-white/5 space-y-3 font-mono text-[10.5px] overflow-hidden shadow-inner"
+                      className="relative p-4 sm:p-5 rounded-2xl bg-black/60 border border-white/5 space-y-3 font-mono text-[10.5px] overflow-hidden shadow-inner text-left"
                     >
                       {/* Left & Right Physical Tear-off Ticket Notches */}
                       <div className="absolute top-[52%] -left-3.5 w-7 h-7 rounded-full bg-[#121212] border-r border-white/5 z-20 pointer-events-none" />
@@ -1606,7 +1924,7 @@ export default function App() {
                       <div className="absolute top-[52%] left-3.5 right-3.5 border-t border-dashed border-white/10 z-10 pointer-events-none" />
 
                       {/* Staggered Row details */}
-                      <div className="space-y-2.5 pb-3">
+                      <div className="space-y-2.5 pb-2">
                         <div className="flex justify-between items-center">
                           <span className="text-gray-500 text-[9.5px]">GUEST NAME:</span>
                           <span className="text-white font-bold uppercase tracking-wide">{bookingDetails.name}</span>
@@ -1655,7 +1973,7 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Rest of items below perforation line */}
+                      {/* Perforation segment footer */}
                       <div className="pt-3 space-y-1.5">
                         {/* VIP indicator if applied */}
                         {(bookingDetails?.wantsVIP || paymentSuccess) && (

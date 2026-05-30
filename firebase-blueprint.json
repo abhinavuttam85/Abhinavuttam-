@@ -1,0 +1,81 @@
+{
+  "entities": {
+    "booking": {
+      "title": "Booking",
+      "description": "A table reservation booking",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The guest's full name"
+        },
+        "phone": {
+          "type": "string",
+          "description": "10-digit mobile number"
+        },
+        "guests": {
+          "type": "integer",
+          "description": "Number of guests"
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "description": "The reservation date"
+        },
+        "time": {
+          "type": "string",
+          "description": "The reservation time slot"
+        },
+        "foodItem": {
+          "type": "string",
+          "description": "Pre-ordered food item or None"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the booking was made"
+        }
+      },
+      "required": ["name", "phone", "guests", "date", "time", "foodItem", "createdAt"]
+    },
+    "testimonial": {
+      "title": "Testimonial",
+      "description": "A customer review / testimonial",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the testimonial"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the reviewer"
+        },
+        "text": {
+          "type": "string",
+          "description": "Detailed feedback text"
+        },
+        "rating": {
+          "type": "integer",
+          "description": "Star rating rating (1-5)"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO string timestamp when submitted"
+        }
+      },
+      "required": ["id", "name", "text", "rating", "created_at"]
+    }
+  },
+  "firestore": {
+    "/bookings/{bookingId}": {
+      "schema": "booking",
+      "description": "Collection of table reservations"
+    },
+    "/testimonials/{testimonialId}": {
+      "schema": "testimonial",
+      "description": "Collection of verified customer reviews and testimonials"
+    }
+  }
+}

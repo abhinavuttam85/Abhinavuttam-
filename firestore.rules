@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net default catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Global Helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // ----------------- Bookings Collection Rules -----------------
+    match /bookings/{bookingId} {
+      allow get: if false;
+      allow list: if false;
+      allow delete: if false;
+      allow update: if false;
+
+      allow create: if isValidId(bookingId) 
+        && isValidBooking(incoming());
+    }
+
+    function isValidBooking(data) {
+      return data.keys().hasAll(['name', 'phone', 'guests', 'date', 'time', 'foodItem', 'createdAt'])
+        && data.keys().size() == 7
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 100
+        && data.phone is string && data.phone.size() >= 10 && data.phone.size() <= 15
+        && data.guests is int && data.guests >= 1 && data.guests <= 15
+        && data.date is string && data.date.size() <= 50
+        // Ensure format and range
+        && data.time is string && data.time.size() >= 1 && data.time.size() <= 50
+        && data.foodItem is string && data.foodItem.size() >= 1 && data.foodItem.size() <= 100
+        && data.createdAt is timestamp && data.createdAt == request.time;
+    }
+
+    // ----------------- Testimonials Collection Rules -----------------
+    match /testimonials/{testimonialId} {
+      allow get: if isValidId(testimonialId);
+      allow list: if true; // anyone can fetch reviews lists
+      allow delete: if false;
+      allow update: if false;
+
+      allow create: if isValidId(testimonialId) 
+        && isValidTestimonial(incoming());
+    }
+
+    function isValidTestimonial(data) {
+      return data.keys().hasAll(['id', 'name', 'text', 'rating', 'created_at'])
+        && data.keys().size() == 5
+        && data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 100
+        && data.text is string && data.text.size() >= 20 && data.text.size() <= 1000
+        && data.rating is int && data.rating >= 1 && data.rating <= 5
+        && data.created_at is string && data.created_at.size() <= 50;
+    }
+  }
+}
