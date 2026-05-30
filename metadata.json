@@ -1,0 +1,6 @@
+{
+  "name": "SGF Narela",
+  "description": "Spice Grill Flame (SGF) Narela - Premium dining table booking and digital menu display. Specializes in signature tandoori chaaps and rich North Indian curries in Bhorgarh, Delhi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
