@@ -97,6 +97,7 @@ export default function App() {
     let interval: any = null;
     if (submitSuccess) {
       setSecondsLeft(900); // 15 minutes limit (900 seconds)
+      setSelectedChannel(null);
       interval = setInterval(() => {
         setSecondsLeft((prev) => {
           if (prev <= 1) {
@@ -1429,7 +1430,7 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Immediate visuals modal state on click "Confirm Booking" (SMS confirmation popup) */}
+      {/* Immediate visuals modal state on click "Confirm Reservation" */}
       <AnimatePresence>
         {submitSuccess && (
           <motion.div 
@@ -1444,243 +1445,35 @@ export default function App() {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 30 }}
               transition={{ type: "spring", damping: 20, stiffness: 150 }}
-              className="max-w-md w-full p-6 sm:p-8 rounded-3xl glass-morphism shadow-2xl border border-white/10 space-y-6 relative overflow-hidden"
+              className="max-w-md w-full p-6 sm:p-8 rounded-3xl glass-morphism shadow-2xl border border-white/10 space-y-5 relative overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Background Ambient Radial Glow */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-emerald-500/10 rounded-full blur-[45px] pointer-events-none" />
 
-              {/* Success check ring with self-drawing path animation */}
-              <div className="flex flex-col items-center text-center space-y-3 relative z-10">
-                <div className="relative flex justify-center items-center mb-1">
-                  {/* Outer breathing halo */}
-                  <motion.div 
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.5, 0] }}
-                    transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-                    className="absolute w-20 h-20 rounded-full bg-emerald-500/20 blur-sm pointer-events-none"
-                  />
-                  
-                  {/* Rotating dashed ring */}
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ repeat: Infinity, duration: 15, ease: "linear" }}
-                    className="absolute w-16 h-16 rounded-full border border-dashed border-emerald-500/20 pointer-events-none"
-                  />
-
-                  {/* Main check circle */}
-                  <motion.div 
-                    initial={{ scale: 0, rotate: -30 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 14 }}
-                    className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-500/20 to-lime-500/10 border-2 border-emerald-500/30 flex items-center justify-center text-emerald-400 relative z-10 shadow-[0_0_20px_rgba(16,185,129,0.25)]"
-                  >
-                    <svg className="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
-                      <motion.path
-                        initial={{ pathLength: 0 }}
-                        animate={{ pathLength: 1 }}
-                        transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                  </motion.div>
-                </div>
-                
-                {/* Visual Title */}
-                <h3 className="font-display font-extrabold text-2xl text-white tracking-tight uppercase" id="booking-success-title">
-                  Table Reserved
-                </h3>
-                <p className="text-[10px] text-[#A3E635] font-black tracking-widest uppercase font-mono bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                  Ready to serve you at SGF Narela
-                </p>
-                <p className="text-[11px] text-gray-400 max-w-xs leading-relaxed">
-                  We have successfully registered your slot on the Bawana-Narela Road. Bring this pass along.
-                </p>
-              </div>
-
-              {/* Luxury Receipt Ticket Wrapper */}
-              {bookingDetails && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.4 }}
-                  className="relative p-5 sm:p-6 rounded-2xl bg-black/50 border border-white/5 space-y-3.5 font-mono text-[11px] overflow-hidden shadow-inner"
-                >
-                  {/* Left & Right Physical Tear-off Ticket Notches */}
-                  <div className="absolute top-[52%] -left-3.5 w-7 h-7 rounded-full bg-[#121212] border-r border-white/5 z-20 pointer-events-none" />
-                  <div className="absolute top-[52%] -right-3.5 w-7 h-7 rounded-full bg-[#121212] border-l border-white/5 z-20 pointer-events-none" />
-                  
-                  {/* Side Dotted Perforation Line between notches */}
-                  <div className="absolute top-[52%] left-3.5 right-3.5 border-t border-dashed border-white/10 z-10 pointer-events-none" />
-
-                  {/* Staggered Row details */}
-                  <div className="space-y-3 pb-4">
-                    <motion.div 
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 }}
-                      className="flex justify-between items-center"
-                    >
-                      <span className="text-gray-500 text-[10px]">GUEST NAME:</span>
-                      <span className="text-white font-bold uppercase tracking-wide">{bookingDetails.name}</span>
-                    </motion.div>
-                    
-                    <motion.div 
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.38 }}
-                      className="flex justify-between items-center"
-                    >
-                      <span className="text-gray-500 text-[10px]">CONTACT PHONE:</span>
-                      <span className="text-white font-bold font-mono">+91 {bookingDetails.phone || "Secure Payer"}</span>
-                    </motion.div>
-
-                    <motion.div 
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.46 }}
-                      className="flex justify-between items-center"
-                    >
-                      <span className="text-gray-500 text-[10px]">SEATING VOLUME:</span>
-                      <span className="text-white font-bold">{bookingDetails.guests} Guests</span>
-                    </motion.div>
-
-                    <motion.div 
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.54 }}
-                      className="flex justify-between items-center"
-                    >
-                      <span className="text-gray-500 text-[10px]">RESERVATION DATE:</span>
-                      <span className="text-emerald-400 font-bold">{bookingDetails.date}</span>
-                    </motion.div>
-
-                    <motion.div 
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.62 }}
-                      className="flex justify-between items-center"
-                    >
-                      <span className="text-gray-500 text-[10px]">ARRIVING TIME:</span>
-                      <span className="text-white font-extrabold text-[#FF4500] text-xs underline decoration-dotted decoration-[#FF4500]/50">{bookingDetails.time}</span>
-                    </motion.div>
-
-                    {bookingDetails.foodItem && bookingDetails.foodItem !== "None (Reserve table only)" && (
-                      <motion.div 
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.7 }}
-                        className="flex justify-between items-start pt-1 gap-2"
-                      >
-                        <span className="text-gray-500 text-[10px] shrink-0">PRE-ORDERED DISH:</span>
-                        <span className="text-emerald-400 font-bold text-right leading-tight max-w-[200px]">{bookingDetails.foodItem}</span>
-                      </motion.div>
-                    )}
-
-                    <motion.div 
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.75 }}
-                      className="flex justify-between items-center pt-2.5 mt-1 border-t border-white/5 border-dashed"
-                    >
-                      <span className="text-gray-500 text-[10px] flex items-center gap-1 animate-pulse">
-                        <Clock className="w-3 h-3 text-[#FF4500]" />
-                        TABLE HOLD TIME:
-                      </span>
-                      <div className="text-right">
-                        <span className={secondsLeft === 0 ? "text-red-500 font-extrabold text-xs font-mono animate-pulse" : "text-[#FF4500] font-black tracking-wider text-xs font-mono"}>
-                          {secondsLeft === 0 ? "EXPIRED" : formatCountdown(secondsLeft)}
-                        </span>
-                        <p className="text-[8px] text-gray-500 font-sans leading-none mt-0.5 uppercase tracking-tight">
-                          {secondsLeft === 0 ? "Table Auto-Released" : "Released at 00:00"}
-                        </p>
-                      </div>
-                    </motion.div>
-                  </div>
-
-                  {/* Rest of items below perforation line */}
-                  <div className="pt-4 space-y-2">
-                    {/* VIP indicator if applied */}
-                    {(bookingDetails?.wantsVIP || paymentSuccess) && (
-                      <motion.div 
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.75 }}
-                        className="flex justify-between items-center bg-[#FF4500]/10 p-2 rounded-xl border border-[#FF4500]/20"
-                      >
-                        <span className="text-[#FF4500] font-black text-[9px] flex items-center gap-1">
-                          <Flame className="w-3 h-3 fill-current animate-pulse" />
-                          SOFA LOUNGE:
-                        </span>
-                        <span className="text-emerald-400 font-extrabold text-[10px] uppercase">
-                          VIP Reserved (₹500)
-                        </span>
-                      </motion.div>
-                    )}
-
-                    {/* Highly stylized digital barcode representing the reservation */}
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 0.8 }}
-                      transition={{ delay: 0.82 }}
-                      className="pt-2 flex flex-col items-center justify-center space-y-1.5"
-                    >
-                      <div className="flex items-center gap-[1.5px] h-6">
-                        {[4, 1, 3, 1, 5, 2, 5, 4, 1, 3, 5, 2, 8, 4, 3, 5, 1, 4].map((val, idx) => (
-                          <div 
-                            key={idx} 
-                            style={{ width: `${(val % 3) + 1}px` }} 
-                            className={`h-full bg-white/70 ${idx % 4 === 0 ? 'opacity-40' : 'opacity-90'}`} 
-                          />
-                        ))}
-                      </div>
-                      <span className="text-[7.5px] text-gray-500 tracking-[0.25em] font-mono leading-none">
-                        SGF-NAR-{bookingDetails.phone ? bookingDetails.phone.slice(-4) : "8511"}-{bookingDetails.time?.replace(":", "") || "1900"}
-                      </span>
-                    </motion.div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Stripe Payment Success Receipt Token */}
-              {paymentSuccess && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 }}
-                  className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20 space-y-1"
-                >
-                  <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                    <span>STRIPE DIRECT TRANSACTION REPORT</span>
-                  </div>
-                  <span className="block text-[10px] font-mono text-gray-400">
-                    ID: <code className="text-white font-bold bg-black/30 px-1 rounded">{paymentTrxId || "stripe_completed"}</code>
-                  </span>
-                  <span className="block text-[9.5px] text-gray-400">
-                    Status: <code className="text-emerald-400 font-bold font-mono">FULLY_SETTLED_CREDIT</code>. Cleaned &amp; fully adjusted in final dining bill.
-                  </span>
-                </motion.div>
-              )}
-
-              {/* Dynamic Notification Dispatcher or Polished Thank You note */}
               {selectedChannel === null ? (
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[#FF4500] font-mono mb-1">
-                      CHOOSE CONFIRMATION METHOD
+                /* STEP 1: CHOOSE CONFIRMATION METHOD (Displaces ticket and congratulations at first) */
+                <div className="space-y-6 relative z-10 py-2">
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-500/20 to-lime-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 relative z-10 shadow-[0_0_20px_rgba(16,185,129,0.15)] animate-pulse">
+                      <MessageSquare className="w-6 h-6 text-[#FF4500]" />
+                    </div>
+                    
+                    <h3 className="font-display font-extrabold text-2xl text-white tracking-tight uppercase">
+                      Confirm Dispatch
+                    </h3>
+                    <p className="text-[10px] text-[#A3E635] font-black tracking-widest uppercase font-mono bg-[#FF4500]/10 px-3 py-1 rounded-full border border-[#FF4500]/20">
+                      Almost Done — Choose Channel
                     </p>
-                    <p className="text-[11px] text-gray-400">
-                      Instantly draft and send confirmation logs to SGF support desk:
+                    <p className="text-[11.5px] text-gray-300 max-w-xs leading-relaxed">
+                      Secure and hold your selected dining slot at SGF Narela by choosing instant receipt dispatch via WhatsApp or SMS below:
                     </p>
                   </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {/* Option 1: WhatsApp */}
+
+                  <div className="grid grid-cols-1 gap-3 pt-2">
+                    {/* Option 1: Reserve through WhatsApp */}
                     <motion.button
-                      whileHover={{ scale: 1.03, translateY: -2 }}
+                      whileHover={{ scale: 1.02, translateY: -1 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => {
                         setSelectedChannel("whatsapp");
@@ -1689,22 +1482,27 @@ export default function App() {
                         const waUrl = `https://wa.me/918511438482?text=${encodeURIComponent(waText)}`;
                         window.open(waUrl, "_blank");
                       }}
-                      className="flex flex-col items-center justify-center p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all text-center group cursor-pointer focus:outline-none"
+                      className="flex items-center justify-between p-4 rounded-2xl border border-emerald-500/30 bg-[#25D366]/10 hover:bg-[#25D366]/20 transition-all text-left group cursor-pointer focus:outline-none"
                     >
-                      <div className="w-10 h-10 rounded-full bg-[#25D366] flex items-center justify-center text-white mb-2 shadow-[0_0_10px_rgba(37,211,102,0.3)] group-hover:scale-110 transition-transform">
-                        <Smartphone className="w-5 h-5 fill-current" />
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[#25D366] flex items-center justify-center text-white shadow-[0_0_10px_rgba(37,211,102,0.3)] group-hover:scale-110 transition-transform">
+                          <Smartphone className="w-5 h-5 fill-current" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-black text-white uppercase tracking-wider block">
+                            Reserve through WhatsApp
+                          </span>
+                          <span className="text-[9px] text-[#25D366] font-mono">
+                            Send direct message draft
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-xs font-bold text-white uppercase tracking-wider block">
-                        WhatsApp Link
-                      </span>
-                      <span className="text-[9px] text-emerald-400 font-mono mt-0.5">
-                        Send message draft
-                      </span>
+                      <ChevronRight className="w-4 h-4 text-emerald-400 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                     </motion.button>
 
-                    {/* Option 2: SMS */}
+                    {/* Option 2: Reserve through SMS */}
                     <motion.button
-                      whileHover={{ scale: 1.03, translateY: -2 }}
+                      whileHover={{ scale: 1.02, translateY: -1 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => {
                         setSelectedChannel("sms");
@@ -1713,36 +1511,207 @@ export default function App() {
                         const smsUrl = `sms:+918511438482?body=${encodeURIComponent(smsText)}`;
                         window.open(smsUrl, "_blank");
                       }}
-                      className="flex flex-col items-center justify-center p-4 rounded-2xl border border-sky-500/20 bg-sky-500/10 hover:bg-sky-500/20 transition-all text-center group cursor-pointer focus:outline-none"
+                      className="flex items-center justify-between p-4 rounded-2xl border border-[#00acee]/30 bg-sky-500/10 hover:bg-sky-500/20 transition-all text-left group cursor-pointer focus:outline-none"
                     >
-                      <div className="w-10 h-10 rounded-full bg-sky-500 flex items-center justify-center text-white mb-2 shadow-[0_0_10px_rgba(14,165,233,0.3)] group-hover:scale-110 transition-transform">
-                        <MessageSquare className="w-5 h-5" />
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-sky-500 flex items-center justify-center text-white shadow-[0_0_10px_rgba(14,165,233,0.3)] group-hover:scale-110 transition-transform">
+                          <MessageSquare className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-black text-white uppercase tracking-wider block">
+                            Reserve through SMS
+                          </span>
+                          <span className="text-[9px] text-sky-400 font-mono">
+                            Transmit via text message
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-xs font-bold text-white uppercase tracking-wider block">
-                        Native SMS Link
-                      </span>
-                      <span className="text-[9px] text-sky-400 font-mono mt-0.5">
-                        Send via messaging
-                      </span>
+                      <ChevronRight className="w-4 h-4 text-sky-400 opacity-60 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                     </motion.button>
                   </div>
                 </div>
               ) : (
-                <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-400/20 space-y-3.5 text-center transition-all animate-fadeIn">
-                  <div className="flex flex-col items-center space-y-1.5">
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                      <CheckCircle className="w-5 h-5" />
+                /* STEP 2: TABLE IS RESERVED, TICKET RECEIPT & THANK YOU NOTE DISPLAYED */
+                <div className="space-y-4 relative z-10 max-h-[70vh] overflow-y-auto pr-1">
+                  {/* Success check circle/ring with spinning dashes */}
+                  <div className="flex flex-col items-center text-center space-y-2.5 relative z-10">
+                    <div className="relative flex justify-center items-center mb-1 animate-fadeIn">
+                      {/* Outer breathing halo */}
+                      <motion.div 
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: [1, 1.3, 1], opacity: [0.2, 0.5, 0] }}
+                        transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+                        className="absolute w-16 h-16 rounded-full bg-emerald-500/20 blur-sm pointer-events-none"
+                      />
+                      
+                      {/* Rotating dashed ring */}
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 15, ease: "linear" }}
+                        className="absolute w-14 h-14 rounded-full border border-dashed border-emerald-500/20 pointer-events-none"
+                      />
+
+                      {/* Main check circle */}
+                      <motion.div 
+                        initial={{ scale: 0, rotate: -30 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: "spring", stiffness: 200, damping: 14 }}
+                        className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-500/20 to-lime-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 relative z-10 shadow-[0_0_15px_rgba(16,185,129,0.25)]"
+                      >
+                        <svg className="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                          <motion.path
+                            initial={{ pathLength: 0 }}
+                            animate={{ pathLength: 1 }}
+                            transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </motion.div>
                     </div>
-                    <h4 className="text-xs font-black uppercase tracking-wider text-[#A3E635]">
-                      Dispatched Successfully
-                    </h4>
-                    <p className="text-[10.5px] text-gray-400 max-w-sm mx-auto leading-relaxed">
-                      Your booking confirmation details have been dispatched via <strong className="text-white capitalize">{selectedChannel}</strong> successfully.
+                    
+                    {/* Visual Title */}
+                    <h3 className="font-display font-extrabold text-xl text-white tracking-tight uppercase" id="booking-success-title">
+                      Table is Reserved
+                    </h3>
+                    <p className="text-[9px] text-[#A3E635] font-black tracking-widest uppercase font-mono bg-emerald-500/10 px-3 py-0.5 rounded-full border border-emerald-500/20">
+                      Ready to serve you at SGF Narela
                     </p>
                   </div>
 
+                  {/* Polished Thank You note */}
+                  <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 text-center space-y-1 my-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#FF4500] font-mono leading-none">
+                      Thank You Note
+                    </p>
+                    <p className="text-[11px] text-gray-300 leading-normal font-sans">
+                      Thank you for choosing SGF Narela! Your reservation is officially secured. We dispatched your ticket summary over <strong className="text-[#A3E635] uppercase">{selectedChannel}</strong>. Present this ticket pass at the reception for immediate dining.
+                    </p>
+                  </div>
+
+                  {/* Luxury Receipt Ticket Wrapper */}
+                  {bookingDetails && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1, duration: 0.3 }}
+                      className="relative p-4 sm:p-5 rounded-2xl bg-black/60 border border-white/5 space-y-3 font-mono text-[10.5px] overflow-hidden shadow-inner"
+                    >
+                      {/* Left & Right Physical Tear-off Ticket Notches */}
+                      <div className="absolute top-[52%] -left-3.5 w-7 h-7 rounded-full bg-[#121212] border-r border-white/5 z-20 pointer-events-none" />
+                      <div className="absolute top-[52%] -right-3.5 w-7 h-7 rounded-full bg-[#121212] border-l border-white/5 z-20 pointer-events-none" />
+                      
+                      {/* Side Dotted Perforation Line between notches */}
+                      <div className="absolute top-[52%] left-3.5 right-3.5 border-t border-dashed border-white/10 z-10 pointer-events-none" />
+
+                      {/* Staggered Row details */}
+                      <div className="space-y-2.5 pb-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-500 text-[9.5px]">GUEST NAME:</span>
+                          <span className="text-white font-bold uppercase tracking-wide">{bookingDetails.name}</span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-500 text-[9.5px]">CONTACT PHONE:</span>
+                          <span className="text-white font-bold font-mono">+91 {bookingDetails.phone || "Secure Payer"}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-500 text-[9.5px]">SEATING VOLUME:</span>
+                          <span className="text-white font-bold">{bookingDetails.guests} Guests</span>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-500 text-[9.5px]">RESERVATION DATE:</span>
+                          <span className="text-emerald-400 font-bold">{bookingDetails.date}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-500 text-[9.5px]">ARRIVING TIME:</span>
+                          <span className="text-white font-extrabold text-[#FF4500] text-[11px] underline decoration-dotted decoration-[#FF4500]/50">{bookingDetails.time}</span>
+                        </div>
+
+                        {bookingDetails.foodItem && bookingDetails.foodItem !== "None (Reserve table only)" && (
+                          <div className="flex justify-between items-start pt-0.5 gap-2">
+                            <span className="text-gray-500 text-[9.5px] shrink-0">PRE-ORDERED DISH:</span>
+                            <span className="text-emerald-400 font-bold text-right leading-tight max-w-[200px]">{bookingDetails.foodItem}</span>
+                          </div>
+                        )}
+
+                        <div className="flex justify-between items-center pt-2 mt-0.5 border-t border-white/5 border-dashed">
+                          <span className="text-gray-500 text-[9px] flex items-center gap-1 animate-pulse">
+                            <Clock className="w-3 h-3 text-[#FF4500]" />
+                            TABLE HOLD TIME:
+                          </span>
+                          <div className="text-right">
+                            <span className={secondsLeft === 0 ? "text-red-500 font-extrabold text-[11px] font-mono animate-pulse" : "text-[#FF4500] font-black tracking-wider text-[11px] font-mono"}>
+                              {secondsLeft === 0 ? "EXPIRED" : formatCountdown(secondsLeft)}
+                            </span>
+                            <p className="text-[7.5px] text-gray-500 font-sans leading-none mt-0.5 uppercase tracking-tight">
+                              {secondsLeft === 0 ? "Table Auto-Released" : "Released at 00:00"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Rest of items below perforation line */}
+                      <div className="pt-3 space-y-1.5">
+                        {/* VIP indicator if applied */}
+                        {(bookingDetails?.wantsVIP || paymentSuccess) && (
+                          <div className="flex justify-between items-center bg-[#FF4500]/10 p-2 rounded-xl border border-[#FF4500]/20">
+                            <span className="text-[#FF4500] font-black text-[9px] flex items-center gap-1">
+                              <Flame className="w-3 h-3 fill-current animate-pulse" />
+                              SOFA LOUNGE:
+                            </span>
+                            <span className="text-emerald-400 font-extrabold text-[9.5px] uppercase">
+                              VIP Reserved (₹500)
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Highly stylized digital barcode representing the reservation */}
+                        <div className="pt-2.5 flex flex-col items-center justify-center space-y-1.5">
+                          <div className="flex items-center gap-[1.5px] h-6">
+                            {[4, 1, 3, 1, 5, 2, 5, 4, 1, 3, 5, 2, 8, 4, 3, 5, 1, 4].map((val, idx) => (
+                              <div 
+                                key={idx} 
+                                style={{ width: `${(val % 3) + 1}px` }} 
+                                className={`h-full bg-white/70 ${idx % 4 === 0 ? 'opacity-40' : 'opacity-90'}`} 
+                              />
+                            ))}
+                          </div>
+                          <span className="text-[7px] text-gray-500 tracking-[0.25em] font-mono leading-none">
+                            SGF-NAR-{bookingDetails.phone ? bookingDetails.phone.slice(-4) : "8511"}-{bookingDetails.time?.replace(":", "") || "1900"}
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Stripe Payment Success Receipt Token */}
+                  {paymentSuccess && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                      className="p-3 rounded-xl bg-emerald-950/25 border border-emerald-500/20 space-y-1"
+                    >
+                      <div className="flex items-center gap-1.5 text-emerald-400 text-[10.5px] font-bold uppercase tracking-wider">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>STRIPE TRANSACT REPORT</span>
+                      </div>
+                      <span className="block text-[9px] font-mono text-gray-400">
+                        ID: <code className="text-white font-bold bg-black/30 px-1 rounded">{paymentTrxId || "stripe_completed"}</code>
+                      </span>
+                      <span className="block text-[9px] text-gray-400">
+                        Status: <code className="text-emerald-400 font-bold font-mono">FULLY_SETTLED_CREDIT</code>. Fully adjusted in final dining bill.
+                      </span>
+                    </motion.div>
+                  )}
+
                   {/* Manual trigger / retry option */}
-                  <div className="pt-1 flex justify-center items-center gap-2">
+                  <div className="pt-2 flex justify-center items-center gap-3 border-t border-white/5 font-mono text-[9px]">
                     <button
                       onClick={() => {
                         const foodText = bookingDetails?.foodItem && bookingDetails.foodItem !== "None (Reserve table only)" ? `\nFood Item: ${bookingDetails.foodItem}` : "";
@@ -1753,14 +1722,14 @@ export default function App() {
                           window.open(`sms:+918511438482?body=${encodeURIComponent(msgText)}`, "_blank");
                         }
                       }}
-                      className="text-[9.5px] uppercase font-bold tracking-widest text-[#FF4500] hover:underline focus:outline-none"
+                      className="font-bold uppercase tracking-wider text-[#FF4500] hover:underline focus:outline-none"
                     >
                       Resend / Open manually ↺
                     </button>
-                    <span className="text-gray-600 text-[10px]">•</span>
+                    <span className="text-gray-600 font-sans">•</span>
                     <button
                       onClick={() => setSelectedChannel(null)}
-                      className="text-[9.5px] uppercase font-bold tracking-widest text-gray-400 hover:text-white hover:underline focus:outline-none"
+                      className="font-bold uppercase tracking-wider text-gray-400 hover:text-white hover:underline focus:outline-none"
                     >
                       Change Method
                     </button>
@@ -1774,7 +1743,7 @@ export default function App() {
                   setSubmitSuccess(false);
                   setPaymentSuccess(false);
                 }}
-                className="w-full py-3 bg-white text-black font-extrabold uppercase rounded-xl hover:bg-[#FF4500] hover:text-white transition-all text-[11px] tracking-widest cursor-pointer font-display"
+                className="w-full py-3 bg-white text-black font-extrabold uppercase rounded-xl hover:bg-[#FF4500] hover:text-white transition-all text-[11px] tracking-widest cursor-pointer font-display relative z-20"
                 id="close-success-modal"
               >
                 Return to Website
